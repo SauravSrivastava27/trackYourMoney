@@ -1,0 +1,97 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum AccountType {
+  CASH
+  SAVINGS
+  CHECKING
+  CREDIT_CARD
+  INVESTMENT
+  OTHER
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  passwordHash String
+  accounts     Account[]
+  categories   Category[]
+  transactions Transaction[]
+  sessions     Session[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  name         String
+  currency     String        @default("INR")
+  type         AccountType   @default(CHECKING)
+  balance      Decimal       @default(0) @db.Decimal(14, 2)
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+model Category {
+  id           String          @id @default(cuid())
+  name         String
+  type         TransactionType
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  createdAt    DateTime        @default(now())
+
+  @@unique([userId, name, type])
+}
+
+model Transaction {
+  id         String          @id @default(cuid())
+  title      String
+  amount     Decimal         @db.Decimal(14, 2)
+  type       TransactionType
+  occurredAt DateTime        @default(now())
+  note       String?
+  userId     String
+  accountId  String
+  categoryId String?
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account    Account         @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  category   Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([userId, occurredAt])
+  @@index([accountId])
+  @@index([categoryId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
