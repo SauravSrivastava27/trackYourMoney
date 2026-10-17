@@ -3,6 +3,32 @@ app/backend/node_modules/
 app/frontend/dist/
 app/backend/dist/
 
+# Frontend dependencies and tooling
+/app/frontend/.pnp
+/app/frontend/.pnp.*
+/app/frontend/.yarn/*
+!/app/frontend/.yarn/patches
+!/app/frontend/.yarn/plugins
+!/app/frontend/.yarn/releases
+!/app/frontend/.yarn/versions
+/app/frontend/.next/
+/app/frontend/out/
+/app/frontend/build
+/app/frontend/*.pem
+/app/frontend/**/*.pem
+/app/frontend/.pnpm-debug.log*
+/app/frontend/.vercel
+/app/frontend/next-env.d.ts
+/app/frontend/.vscode/*
+!/app/frontend/.vscode/extensions.json
+
+# Local environment and generated files
+.env*
+!.env.example
+!.env.*.example
+coverage/
+*.tsbuildinfo
+
 # Logs
 logs
 *.log
@@ -11,6 +37,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+.pnpm-debug.log*
 
 node_modules
 dist
