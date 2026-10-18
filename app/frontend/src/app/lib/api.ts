@@ -28,7 +28,7 @@ export class ApiError extends Error {
 
 let refreshInFlight: Promise<boolean> | null = null;
 
-async function refreshSession(): Promise<boolean> {
+export async function refreshAuthSession(): Promise<boolean> {
   if (!refreshInFlight) {
     refreshInFlight = fetch(`${API_URL}/api/v1/auth/refresh`, {
       method: "POST",
@@ -69,7 +69,7 @@ export async function apiRequest<T>(
     path !== "/api/v1/auth/signup" &&
     path !== "/api/v1/auth/logout"
   ) {
-    const refreshed = await refreshSession();
+    const refreshed = await refreshAuthSession();
     if (refreshed) {
       response = await sendRequest(path, options);
     }
