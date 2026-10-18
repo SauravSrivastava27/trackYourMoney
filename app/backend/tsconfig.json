@@ -1,15 +1,36 @@
-
 {
   "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "rootDir": "src",
-    "outDir": "dist",
-    "strict": true,
-    "esModuleInterop": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true
   },
-  "include": ["src/**/*.ts"]
+  "include": [
+    "src/main.ts",
+    "src/nest-app.module.ts",
+    "src/nest/**/*.ts",
+    "src/lib/authTokens.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/routes",
+    "src/middleware",
+    "src/app.ts",
+    "src/server.ts"
+  ]
 }
