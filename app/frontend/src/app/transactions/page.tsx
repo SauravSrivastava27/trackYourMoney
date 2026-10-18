@@ -11,7 +11,6 @@ import {
   type TransactionType,
 } from "../hooks/useTransactions";
 import { useAccounts } from "../hooks/useAccounts";
-import { useCategoryOptions } from "../hooks/useCategoryOptions";
 import Button from "../components/ui/Button";
 import Alert from "../components/ui/Alert";
 import LoadingState from "../components/ui/LoadingState";
@@ -24,7 +23,6 @@ type FormState = {
   occurredAt: string;
   note: string;
   accountId: string;
-  categoryId: string;
 };
 
 function todayForInput() {
@@ -60,7 +58,6 @@ const emptyForm: FormState = {
   occurredAt: todayForInput(),
   note: "",
   accountId: "",
-  categoryId: "",
 };
 
 export default function TransactionsPage() {
@@ -80,7 +77,6 @@ export default function TransactionsPage() {
 
   const transactionsQuery = useTransactions(filters);
   const accountsQuery = useAccounts();
-  const categoriesQuery = useCategoryOptions();
   const createMutation = useCreateTransaction();
   const updateMutation = useUpdateTransaction();
   const deleteMutation = useDeleteTransaction();
@@ -117,7 +113,6 @@ export default function TransactionsPage() {
       occurredAt: todayForInputFrom(transaction.occurredAt),
       note: transaction.note ?? "",
       accountId: transaction.accountId,
-      categoryId: transaction.categoryId ?? "",
     });
     setFormOpen(true);
   }
@@ -154,7 +149,6 @@ export default function TransactionsPage() {
       occurredAt: new Date(`${form.occurredAt}T12:00:00`).toISOString(),
       note: form.note.trim() || null,
       accountId: form.accountId,
-      categoryId: form.categoryId || null,
     };
 
     try {
@@ -362,24 +356,6 @@ export default function TransactionsPage() {
             </label>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium">Category (optional)</span>
-              <select
-                value={form.categoryId}
-                onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm"
-              >
-                <option value="">Uncategorized</option>
-                {(categoriesQuery.data ?? [])
-                  .filter((category) => category.type === form.type)
-                  .map((category) => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-              </select>
-              {categoriesQuery.isError && (
-                <span className="mt-1 block text-xs text-amber-600">Categories could not be loaded.</span>
-              )}
-            </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium">Account</span>
               <select
