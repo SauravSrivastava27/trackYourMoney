@@ -3,6 +3,8 @@ import type { Request } from 'express';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from './database.module.js';
 import { AuthGuard } from './auth.guard.js';
+import { WebsocketModule } from './websocket.module.js';
+import { TransactionsGateway } from './transactions.gateway.js';
 
 const kinds = ['INCOME','EXPENSE'] as const;
 const include = { account: { select: { id: true, name: true, currency: true } }, category: { select: { id: true, name: true, type: true } } } as const;
@@ -77,12 +79,12 @@ class TransactionsService {
 @Controller('transactions')
 @UseGuards(AuthGuard)
 class TransactionsController {
-  constructor(private readonly service: TransactionsService) {}
+  constructor(private readonly service: TransactionsService, private readonly gateway: TransactionsGateway) {}
   private uid(req: Request) { const id = (req as Request & { userId?: string }).userId; if (!id) throw new BadRequestException('Authenticated user missing.'); return id; }
   @Get() list(@Req() req: Request, @Query() query: any) { return this.service.list(this.uid(req), query); }
-  @Post() create(@Req() req: Request, @Body() body: any) { return this.service.create(this.uid(req), body); }
-  @Patch(':id') update(@Req() req: Request, @Param('id') id: string, @Body() body: any) { return this.service.update(this.uid(req), id, body); }
-  @Delete(':id') remove(@Req() req: Request, @Param('id') id: string) { return this.service.remove(this.uid(req), id); }
+  @Post() async create(@Req() req: Request, @Body() body: any) { const userId = this.uid(req); const result = await this.service.create(userId, body); this.gateway.emitToUser(userId, 'transaction:created', result.data); return result; }
+  @Patch(':id') async update(@Req() req: Request, @Param('id') id: string, @Body() body: any) { const userId = this.uid(req); const result = await this.service.update(userId, id, body); this.gateway.emitToUser(userId, 'transaction:updated', result.data); return result; }
+  @Delete(':id') async remove(@Req() req: Request, @Param('id') id: string) { const userId = this.uid(req); const result = await this.service.remove(userId, id); this.gateway.emitToUser(userId, 'transaction:deleted', result.data); return result; }
 }
-@Module({ controllers: [TransactionsController], providers: [TransactionsService] })
+@Module({ imports: [WebsocketModule], controllers: [TransactionsController], providers: [TransactionsService] })
 export class TransactionsModule {}
