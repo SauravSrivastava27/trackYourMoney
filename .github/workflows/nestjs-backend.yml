@@ -1,0 +1,36 @@
+name: NestJS backend CI
+
+on:
+  push:
+    branches:
+      - feature/express-to-nestjs-migration
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  nestjs-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/backend
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fintrack
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/fintrack
+      ACCESS_TOKEN_SECRET: ci-only-secret-that-is-longer-than-thirty-two-characters
+      CLIENT_ORIGIN: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/backend/package-lock.json
+      - name: Install dependencies
+        run: npm install
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build NestJS API
+        run: npm run build
