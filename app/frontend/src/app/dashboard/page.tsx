@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAccounts } from "../hooks/useAccounts";
 import { useTransactions } from "../hooks/useTransactions";
 import LoadingState from "../components/ui/LoadingState";
@@ -261,9 +262,9 @@ export default function DashboardPage() {
                 <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
                   Add your first income or expense to see it here.
                 </p>
-                <a href="/transactions" className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                <Link href="/transactions" className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
                   Add transaction
-                </a>
+                </Link>
               </div>
             ) : (
               <div className="mt-5 space-y-3">
@@ -281,9 +282,9 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 ))}
-                <a href="/transactions" className="inline-flex pt-2 text-sm font-semibold text-primary hover:underline">
+                <Link href="/transactions" className="inline-flex pt-2 text-sm font-semibold text-primary hover:underline">
                   View all transactions →
-                </a>
+                </Link>
               </div>
             )}
           </article>
