@@ -41,10 +41,23 @@ export default function DashboardPage() {
 
     async function verifySession() {
       try {
-        const response = await fetch(
+        let response = await fetch(
           `${API_URL}/api/v1/auth/me`,
-          { credentials: "include" }
+          { credentials: "include", cache: "no-store" }
         );
+
+        if (response.status === 401) {
+          const refreshResponse = await fetch(
+            `${API_URL}/api/v1/auth/refresh`,
+            { method: "POST", credentials: "include" }
+          );
+          if (refreshResponse.ok) {
+            response = await fetch(
+              `${API_URL}/api/v1/auth/me`,
+              { credentials: "include", cache: "no-store" }
+            );
+          }
+        }
 
         if (response.status === 401) {
           router.replace("/auth");
