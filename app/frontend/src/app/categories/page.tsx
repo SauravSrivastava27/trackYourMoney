@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 import Alert from "../components/ui/Alert";
 import Button from "../components/ui/Button";
 import LoadingState from "../components/ui/LoadingState";
+import PageHeader from "../components/ui/PageHeader";
+import EmptyState from "../components/ui/EmptyState";
 import { useCategories, useCreateCategory } from "../hooks/useCategoryOptions";
 
 export default function CategoriesPage() {
@@ -31,11 +33,11 @@ export default function CategoriesPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7 py-8">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-widest text-primary">Money management</p>
-        <h1 className="mt-2 text-3xl font-bold">Categories</h1>
-        <p className="mt-2 text-muted-foreground">Create categories to organize your income and expenses.</p>
-      </header>
+      <PageHeader
+        eyebrow="Money management"
+        title="Categories"
+        description="Create categories to organize your income and expenses."
+      />
 
       {message && (
         <Alert variant={create.isError ? "error" : "success"}>{message}</Alert>
@@ -82,7 +84,7 @@ export default function CategoriesPage() {
             <article key={group.title} className="rounded-2xl border border-border bg-card p-5">
               <h2 className="font-semibold">{group.title}</h2>
               {group.items.length === 0 ? (
-                <p className="mt-4 rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">No categories created yet.</p>
+                <EmptyState title="No categories yet" description="Create a category above to organize transactions." />
               ) : (
                 <ul className="mt-4 space-y-2">
                   {group.items.map((item) => (
