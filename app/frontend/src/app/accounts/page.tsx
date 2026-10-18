@@ -2,47 +2,18 @@
 "use client";
 
 import {
-  useCallback,
-  useEffect,
   useState,
+  type FormEvent,
 } from "react";
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ??
-  "http://localhost:5000";
-
-type AccountType =
-  | "CASH"
-  | "SAVINGS"
-  | "CHECKING"
-  | "CREDIT_CARD"
-  | "INVESTMENT"
-  | "OTHER";
-
-type Account = {
-  id: string;
-  name: string;
-  currency: string;
-  type: AccountType;
-  balance: string | number;
-  createdAt: string;
-};
-
-type AccountForm = {
-  name: string;
-  type: AccountType;
-  currency: string;
-  balance: string;
-};
-
-type ApiResult<T> = {
-  message?: string;
-  data?: T;
-  errors?: {
-    field: string;
-    message: string;
-  }[];
-};
+import {
+  useAccounts,
+  useCreateAccount,
+  useUpdateAccount,
+  useDeleteAccount,
+  type Account,
+  type AccountInput,
+  type AccountType,
+} from "../hooks/useAccounts";
 
 const accountTypes: {
   value: AccountType;
@@ -56,95 +27,73 @@ const accountTypes: {
   { value: "OTHER", label: "Other" },
 ];
 
-const initialForm: AccountForm = {
+const initialForm = {
   name: "",
-  type: "CHECKING",
+  type: "CHECKING" as AccountType,
   currency: "INR",
   balance: "0",
 };
 
-async function readResponse<T>(
-  response: Response
-): Promise<ApiResult<T>> {
-  const result =
-    (await response.json()) as ApiResult<T>;
-
-  if (!response.ok) {
-    const details = result.errors
-      ?.map((item) => item.message)
-      .join(" ");
-
-    throw new Error(
-      details ||
-        result.message ||
-        "Something went wrong."
-    );
-  }
-
-  return result;
-}
-
 export default function AccountsPage() {
-  const [accounts, setAccounts] =
-    useState<Account[]>([]);
+  const accountsQuery = useAccounts();
+  const createMutation = useCreateAccount();
+  const updateMutation = useUpdateAccount();
+  const deleteMutation = useDeleteAccount();
 
-  const [form, setForm] =
-    useState<AccountForm>(initialForm);
-
+  const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] =
     useState<string | null>(null);
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  const [deletingId, setDeletingId] =
-    useState<string | null>(null);
-
-  const [error, setError] = useState("");
+  const [accountToDelete, setAccountToDelete] =
+    useState<Account | null>(null);
+  const [formError, setFormError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const loadAccounts = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const accounts = accountsQuery.data ?? [];
+  const saving =
+    createMutation.isPending ||
+    updateMutation.isPending;
+  const deleting = deleteMutation.isPending;
 
-    try {
-      const response = await fetch(
-        `${API_URL}/api/v1/accounts`,
-        { credentials: "include" }
-      );
+  const apiError =
+    accountsQuery.error ??
+    createMutation.error ??
+    updateMutation.error ??
+    deleteMutation.error;
 
-      const result =
-        await readResponse<Account[]>(response);
+  const errorMessage =
+    formError ||
+    (apiError instanceof Error
+      ? apiError.message
+      : "");
 
-      setAccounts(result.data ?? []);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load accounts."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const totalINR = accounts.reduce(
+    (total, account) =>
+      total +
+      (account.currency === "INR"
+        ? Number(account.balance)
+        : 0),
+    0
+  );
 
-  useEffect(() => {
-    void loadAccounts();
-  }, [loadAccounts]);
-
-  function updateForm<K extends keyof AccountForm>(
-    field: K,
-    value: AccountForm[K]
+  function formatMoney(
+    amount: number,
+    currency: string
   ) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    try {
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 2,
+      }).format(amount);
+    } catch {
+      return `${currency} ${amount.toFixed(2)}`;
+    }
   }
 
   function resetForm() {
     setForm({ ...initialForm });
     setEditingId(null);
+    setFormError("");
   }
 
   function startEditing(account: Account) {
@@ -156,7 +105,7 @@ export default function AccountsPage() {
     });
 
     setEditingId(account.id);
-    setError("");
+    setFormError("");
     setSuccess("");
 
     window.scrollTo({
@@ -166,156 +115,78 @@ export default function AccountsPage() {
   }
 
   async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>
+    event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
-    setError("");
+    setFormError("");
     setSuccess("");
 
     const name = form.name.trim();
-    const numericBalance = Number(form.balance);
+    const balance = Number(form.balance);
 
     if (!name) {
-      setError("Account name is required.");
+      setFormError("Account name is required.");
       return;
     }
 
     if (
       form.balance.trim() === "" ||
-      !Number.isFinite(numericBalance) ||
-      Math.abs(numericBalance) > 999999999999.99
+      !Number.isFinite(balance) ||
+      Math.abs(balance) > 999999999999.99
     ) {
-      setError("Please enter a valid balance.");
+      setFormError("Please enter a valid balance.");
       return;
     }
 
-    setSaving(true);
+    const input: AccountInput = {
+      name,
+      type: form.type,
+      currency: form.currency,
+      balance,
+    };
 
     try {
-      const isEditing = editingId !== null;
-
-      const url = isEditing
-        ? `${API_URL}/api/v1/accounts/${editingId}`
-        : `${API_URL}/api/v1/accounts`;
-
-      const response = await fetch(url, {
-        method: isEditing ? "PATCH" : "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          type: form.type,
-          currency: form.currency,
-          balance: numericBalance,
-        }),
-      });
-
-      const result =
-        await readResponse<Account>(response);
-
-      const savedAccount = result.data;
-
-      if (!savedAccount) {
-        throw new Error(
-          "Account data was missing from the response."
-        );
-      }
-
-      if (isEditing) {
-        setAccounts((current) =>
-          current.map((account) =>
-            account.id === savedAccount.id
-              ? savedAccount
-              : account
-          )
-        );
+      if (editingId) {
+        await updateMutation.mutateAsync({
+          id: editingId,
+          ...input,
+        });
 
         setSuccess("Account updated successfully.");
       } else {
-        setAccounts((current) => [
-          savedAccount,
-          ...current,
-        ]);
+        await createMutation.mutateAsync(input);
 
         setSuccess("Account created successfully.");
       }
 
       resetForm();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to save account."
-      );
-    } finally {
-      setSaving(false);
+    } catch {
+      // The mutation exposes its error to the UI.
     }
   }
 
-  async function handleDelete(account: Account) {
-    const confirmed = window.confirm(
-      `Delete "${account.name}"? This action cannot be undone.`
-    );
+  async function confirmDelete() {
+    if (!accountToDelete || deleting) return;
 
-    if (!confirmed) return;
-
-    setError("");
+    setFormError("");
     setSuccess("");
-    setDeletingId(account.id);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/v1/accounts/${account.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
+      await deleteMutation.mutateAsync(
+        accountToDelete.id
       );
 
-      await readResponse<{ id: string }>(response);
-
-      setAccounts((current) =>
-        current.filter(
-          (item) => item.id !== account.id
-        )
-      );
-
-      if (editingId === account.id) {
+      if (editingId === accountToDelete.id) {
         resetForm();
       }
 
+      setAccountToDelete(null);
       setSuccess("Account deleted successfully.");
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to delete account."
-      );
-    } finally {
-      setDeletingId(null);
+    } catch {
+      // Keep the modal open so the user can read
+      // the deletion error and retry or cancel.
     }
   }
-
-  const totalINR = accounts.reduce(
-    (total, account) =>
-      total +
-      (account.currency === "INR"
-        ? Number(account.balance)
-        : 0),
-    0
-  );
-
-  const formatMoney = (
-    amount: number,
-    currencyCode: string
-  ) =>
-    new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: currencyCode,
-      maximumFractionDigits: 2,
-    }).format(amount);
 
   return (
     <div className="mx-auto w-full space-y-8 py-8">
@@ -348,7 +219,7 @@ export default function AccountsPage() {
         </p>
       </section>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
         <h2 className="text-xl font-semibold">
           {editingId ? "Edit account" : "Add an account"}
         </h2>
@@ -369,12 +240,15 @@ export default function AccountsPage() {
               id="account-name"
               value={form.name}
               onChange={(event) =>
-                updateForm("name", event.target.value)
+                setForm((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
               }
               placeholder="e.g. HDFC Savings"
               maxLength={100}
               required
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border border-gray-300 bg-transparent p-3 dark:border-zinc-600"
             />
           </div>
 
@@ -390,12 +264,12 @@ export default function AccountsPage() {
               id="account-type"
               value={form.type}
               onChange={(event) =>
-                updateForm(
-                  "type",
-                  event.target.value as AccountType
-                )
+                setForm((current) => ({
+                  ...current,
+                  type: event.target.value as AccountType,
+                }))
               }
-              className="w-full rounded-lg border bg-white p-3"
+              className="w-full rounded-lg border border-gray-300 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-900"
             >
               {accountTypes.map((item) => (
                 <option
@@ -420,22 +294,17 @@ export default function AccountsPage() {
               id="account-currency"
               value={form.currency}
               onChange={(event) =>
-                updateForm("currency", event.target.value)
+                setForm((current) => ({
+                  ...current,
+                  currency: event.target.value,
+                }))
               }
-              className="w-full rounded-lg border bg-white p-3"
+              className="w-full rounded-lg border border-gray-300 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-900"
             >
-              <option value="INR">
-                INR - Indian Rupee
-              </option>
-              <option value="USD">
-                USD - US Dollar
-              </option>
-              <option value="EUR">
-                EUR - Euro
-              </option>
-              <option value="GBP">
-                GBP - British Pound
-              </option>
+              <option value="INR">INR - Indian Rupee</option>
+              <option value="USD">USD - US Dollar</option>
+              <option value="EUR">EUR - Euro</option>
+              <option value="GBP">GBP - British Pound</option>
             </select>
           </div>
 
@@ -455,19 +324,22 @@ export default function AccountsPage() {
               max="999999999999.99"
               value={form.balance}
               onChange={(event) =>
-                updateForm("balance", event.target.value)
+                setForm((current) => ({
+                  ...current,
+                  balance: event.target.value,
+                }))
               }
               required
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border border-gray-300 bg-transparent p-3 dark:border-zinc-600"
             />
           </div>
 
-          {error && (
+          {errorMessage && (
             <p
               role="alert"
               className="text-sm text-red-600 sm:col-span-2"
             >
-              {error}
+              {errorMessage}
             </p>
           )}
 
@@ -483,9 +355,7 @@ export default function AccountsPage() {
           <div className="flex flex-wrap gap-3 sm:col-span-2">
             <button
               type="submit"
-              disabled={
-                saving || deletingId !== null
-              }
+              disabled={saving || deleting}
               className="rounded-lg bg-emerald-600 px-5 py-3 font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
             >
               {saving
@@ -500,7 +370,7 @@ export default function AccountsPage() {
                 type="button"
                 onClick={resetForm}
                 disabled={saving}
-                className="rounded-lg border px-5 py-3 font-medium hover:bg-gray-50 disabled:opacity-60"
+                className="rounded-lg border px-5 py-3 font-medium hover:bg-gray-50 disabled:opacity-60 dark:border-zinc-600 dark:hover:bg-zinc-800"
               >
                 Cancel edit
               </button>
@@ -514,87 +384,183 @@ export default function AccountsPage() {
           Your accounts
         </h2>
 
-        {loading ? (
+        {accountsQuery.isPending ? (
           <p className="mt-4 text-gray-500">
             Loading accounts...
           </p>
+        ) : accountsQuery.isError && accounts.length === 0 ? (
+          <div
+            role="alert"
+            className="mt-4 rounded-xl border border-red-200 p-5 text-sm text-red-600"
+          >
+            {accountsQuery.error.message}
+
+            <button
+              type="button"
+              onClick={() => void accountsQuery.refetch()}
+              className="ml-3 underline"
+            >
+              Retry
+            </button>
+          </div>
         ) : accounts.length === 0 ? (
           <div className="mt-4 rounded-2xl border border-dashed p-8 text-center">
-            <p className="font-medium">
-              No accounts yet
-            </p>
-
+            <p className="font-medium">No accounts yet</p>
             <p className="mt-2 text-sm text-gray-500">
               Create your first account above.
             </p>
           </div>
         ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {accounts.map((account) => {
-              const label =
-                accountTypes.find(
-                  (item) => item.value === account.type
-                )?.label ?? account.type;
+          <>
+            {accountsQuery.isError && (
+              <p
+                role="status"
+                className="mt-3 text-sm text-amber-600"
+              >
+                Could not refresh accounts. Showing cached data.
+              </p>
+            )}
 
-              return (
-                <article
-                  key={account.id}
-                  className="rounded-2xl border border-gray-200 bg-white p-5"
-                >
-                  <p className="text-sm text-gray-500">
-                    {label}
-                  </p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {accounts.map((account) => {
+                const label =
+                  accountTypes.find(
+                    (item) => item.value === account.type
+                  )?.label ?? account.type;
 
-                  <h3 className="mt-2 break-words text-lg font-semibold">
-                    {account.name}
-                  </h3>
+                return (
+                  <article
+                    key={account.id}
+                    className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900"
+                  >
+                    <p className="text-sm text-gray-500">
+                      {label}
+                    </p>
 
-                  <p className="mt-4 break-words text-2xl font-bold">
-                    {formatMoney(
-                      Number(account.balance),
-                      account.currency
-                    )}
-                  </p>
+                    <h3 className="mt-2 break-words text-lg font-semibold">
+                      {account.name}
+                    </h3>
 
-                  <p className="mt-1 text-xs text-gray-500">
-                    {account.currency}
-                  </p>
+                    <p className="mt-4 break-words text-2xl font-bold">
+                      {formatMoney(
+                        Number(account.balance),
+                        account.currency
+                      )}
+                    </p>
 
-                  <div className="mt-5 flex gap-3 border-t pt-4">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        startEditing(account)
-                      }
-                      disabled={
-                        saving || deletingId !== null
-                      }
-                      className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-60"
-                    >
-                      Edit
-                    </button>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {account.currency}
+                    </p>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void handleDelete(account)
-                      }
-                      disabled={
-                        saving || deletingId !== null
-                      }
-                      className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
-                    >
-                      {deletingId === account.id
-                        ? "Deleting..."
-                        : "Delete"}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                    <div className="mt-5 flex gap-3 border-t border-gray-200 pt-4 dark:border-zinc-700">
+                      <button
+                        type="button"
+                        onClick={() => startEditing(account)}
+                        disabled={saving || deleting}
+                        className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-60 dark:border-zinc-600 dark:hover:bg-zinc-800"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormError("");
+                          setAccountToDelete(account);
+                        }}
+                        disabled={saving || deleting}
+                        className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </>
         )}
       </section>
+
+      {accountToDelete && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+          onMouseDown={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              !deleting
+            ) {
+              setAccountToDelete(null);
+            }
+          }}
+        >
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-title"
+            aria-describedby="delete-description"
+            className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-950">
+                <span className="text-2xl" aria-hidden="true">
+                  !
+                </span>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <h2
+                  id="delete-title"
+                  className="text-lg font-semibold"
+                >
+                  Delete account?
+                </h2>
+
+                <p
+                  id="delete-description"
+                  className="mt-2 break-words text-sm leading-6 text-gray-600 dark:text-zinc-300"
+                >
+                  Are you sure you want to delete{" "}
+                  <strong>{accountToDelete.name}</strong>?
+                  This action cannot be undone.
+                </p>
+
+                {deleteMutation.isError && (
+                  <p
+                    role="alert"
+                    className="mt-3 text-sm text-red-600"
+                  >
+                    {deleteMutation.error.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => {
+                  setAccountToDelete(null);
+                  deleteMutation.reset();
+                }}
+                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-100 disabled:opacity-50 dark:border-zinc-600 dark:hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void confirmDelete()}
+                className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deleting ? "Deleting..." : "Delete account"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
