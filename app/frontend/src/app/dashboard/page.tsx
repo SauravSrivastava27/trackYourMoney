@@ -8,6 +8,7 @@ import { useAccounts } from "../hooks/useAccounts";
 import { useTransactions } from "../hooks/useTransactions";
 import LoadingState from "../components/ui/LoadingState";
 import Alert from "../components/ui/Alert";
+import { refreshAuthSession } from "../lib/api";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
@@ -47,11 +48,8 @@ export default function DashboardPage() {
         );
 
         if (response.status === 401) {
-          const refreshResponse = await fetch(
-            `${API_URL}/api/v1/auth/refresh`,
-            { method: "POST", credentials: "include" }
-          );
-          if (refreshResponse.ok) {
+          const refreshed = await refreshAuthSession();
+          if (refreshed) {
             response = await fetch(
               `${API_URL}/api/v1/auth/me`,
               { credentials: "include", cache: "no-store" }
