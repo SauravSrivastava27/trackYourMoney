@@ -317,7 +317,7 @@ export default function AccountsPage() {
               htmlFor="account-balance"
               className="mb-2 block text-sm font-medium"
             >
-              Balance
+              {editingId ? "Current balance" : "Opening balance"}
             </label>
 
             <input
@@ -336,6 +336,11 @@ export default function AccountsPage() {
               required
               className="w-full rounded-lg border border-gray-300 bg-transparent p-3 dark:border-zinc-600"
             />
+            <p className="mt-2 text-xs leading-5 text-gray-500">
+              {editingId
+                ? "This sets the account's current balance directly. Existing transactions are not replayed when you change it."
+                : "Enter money already in this account before you start recording transactions. If you are starting from zero and will add your salary as an income transaction, keep this at ₹0."}
+            </p>
           </div>
 
           {errorMessage && (
