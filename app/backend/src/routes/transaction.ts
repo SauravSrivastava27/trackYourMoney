@@ -41,9 +41,9 @@ async function ownsAccount(userId: string, accountId: string) {
   return Boolean(account);
 }
 
-async function ownsCategory(userId: string, categoryId: string) {
+async function ownsCategory(userId: string, categoryId: string, type: "INCOME" | "EXPENSE") {
   const category = await prisma.category.findFirst({
-    where: { id: categoryId, userId },
+    where: { id: categoryId, userId, type },
     select: { id: true },
   });
   return Boolean(category);
@@ -101,7 +101,7 @@ router.post("/", requireAuth, async (req, res, next) => {
       return;
     }
 
-    if (input.categoryId && !(await ownsCategory(userId, input.categoryId))) {
+    if (input.categoryId && !(await ownsCategory(userId, input.categoryId, input.type))) {
       res.status(400).json({ message: "Select a valid category." });
       return;
     }
@@ -170,7 +170,7 @@ router.patch("/:id", requireAuth, async (req, res, next) => {
       res.status(400).json({ message: "Select a valid account." });
       return;
     }
-    if (input.categoryId && !(await ownsCategory(userId, input.categoryId))) {
+    if (input.categoryId && !(await ownsCategory(userId, input.categoryId, input.type ?? existing.type as "INCOME" | "EXPENSE"))) {
       res.status(400).json({ message: "Select a valid category." });
       return;
     }
