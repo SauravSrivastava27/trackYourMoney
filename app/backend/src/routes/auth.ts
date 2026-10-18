@@ -9,6 +9,7 @@ import {
   REFRESH_TOKEN_TTL_MS,
   authCookieOptions,
   createAccessToken,
+  verifyAccessToken,
 } from "../lib/authTokens.js";
 
 const router = Router();
@@ -196,8 +197,9 @@ router.get("/me", async (req, res, next) => {
   try {
     const token = req.cookies?.[REFRESH_COOKIE_NAME] as string | undefined;
     const accessToken = req.cookies?.[ACCESS_COOKIE_NAME] as string | undefined;
-    if (!token || !accessToken) {
-      res.status(401).json({ message: "Not authenticated." });
+    const accessPayload = accessToken ? verifyAccessToken(accessToken) : null;
+    if (!token || !accessPayload) {
+      res.status(401).json({ message: "Access token missing or expired." });
       return;
     }
 
@@ -217,8 +219,11 @@ router.get("/me", async (req, res, next) => {
       return;
     }
 
-    // The access token is validated by the protected-route middleware.
-    // /me checks the server-side refresh session and cookie presence.
+    if (session.userId !== accessPayload.sub) {
+      res.status(401).json({ message: "Session does not match access token." });
+      return;
+    }
+
     res.status(200).json({ user: session.user });
   } catch (error) {
     next(error);
