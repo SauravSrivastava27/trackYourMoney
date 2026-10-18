@@ -17,10 +17,10 @@ type User = {
   email: string;
 };
 
-function formatINR(value: number) {
+function formatMoney(value: number, currency = "INR") {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "INR",
+    currency,
     maximumFractionDigits: 2,
   }).format(value);
 }
@@ -277,7 +277,7 @@ export default function DashboardPage() {
                       <p className="text-xs text-muted-foreground">{transaction.account.name} · {new Date(transaction.occurredAt).toLocaleDateString("en-IN")}</p>
                     </div>
                     <p className={`text-sm font-semibold ${transaction.type === "INCOME" ? "text-emerald-600" : "text-red-600"}`}>
-                      {transaction.type === "INCOME" ? "+" : "−"}{formatINR(Number(transaction.amount))}
+                      {transaction.type === "INCOME" ? "+" : "−"}{formatMoney(Number(transaction.amount), transaction.account.currency)}
                     </p>
                   </div>
                 ))}
