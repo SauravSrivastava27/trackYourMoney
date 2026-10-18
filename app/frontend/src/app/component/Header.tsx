@@ -9,6 +9,7 @@ import {
 import type { ComponentType } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { refreshAuthSession } from "../lib/api";
 import {
     usePathname,
     useRouter,
@@ -272,11 +273,8 @@ export default function Header() {
                 );
 
                 if (response.status === 401) {
-                    const refreshResponse = await fetch(
-                        `${apiUrl}/api/v1/auth/refresh`,
-                        { method: "POST", credentials: "include" }
-                    );
-                    if (refreshResponse.ok) {
+                    const refreshed = await refreshAuthSession();
+                    if (refreshed) {
                         response = await fetch(
                             `${apiUrl}/api/v1/auth/me`,
                             { credentials: "include", cache: "no-store" }
