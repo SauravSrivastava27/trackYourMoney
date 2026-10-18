@@ -7,6 +7,7 @@ import {
   type FormEvent,
 } from "react";
 import Link from "next/link";
+import { refreshAuthSession } from "../lib/api";
 import { useRouter } from "next/navigation";
 import {
   Eye,
@@ -51,11 +52,8 @@ export default function AuthPage() {
         );
 
         if (response.status === 401) {
-          const refreshResponse = await fetch(
-            `${apiUrl}/api/v1/auth/refresh`,
-            { method: "POST", credentials: "include" }
-          );
-          if (refreshResponse.ok) {
+          const refreshed = await refreshAuthSession();
+          if (refreshed) {
             response = await fetch(
               `${apiUrl}/api/v1/auth/me`,
               { credentials: "include", cache: "no-store" }
