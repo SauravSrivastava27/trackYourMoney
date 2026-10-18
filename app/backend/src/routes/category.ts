@@ -64,4 +64,57 @@ router.post("/", requireAuth, async (req, res, next) => {
   }
 });
 
+
+router.patch("/:id", requireAuth, async (req, res, next) => {
+  try {
+    const parsed = z.object({
+      name: z.string().trim().min(1).max(60),
+    }).safeParse(req.body);
+
+    if (!parsed.success) {
+      validationError(res, parsed.error);
+      return;
+    }
+
+    const userId = res.locals.userId as string;
+    const id = req.params.id;
+    if (typeof id !== "string") {
+      res.status(400).json({ message: "Invalid category ID." });
+      return;
+    }
+
+    const existing = await prisma.category.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+    if (!existing) {
+      res.status(404).json({ message: "Category not found." });
+      return;
+    }
+
+    const category = await prisma.category.update({
+      where: { id: existing.id },
+      data: { name: parsed.data.name },
+    });
+
+    res.status(200).json({
+      message: "Category updated successfully.",
+      data: category,
+    });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      res.status(409).json({
+        message: "A category with this name and type already exists.",
+      });
+      return;
+    }
+    next(error);
+  }
+});
+
 export default router;
