@@ -31,7 +31,7 @@ The existing Express app mounts these routes under `/api/v1`:
 - Zod request validation and explicit JSON response contracts.
 - Prisma 7.10.1, PostgreSQL adapter and a `pg` connection pool.
 - Existing Prisma schema includes User, Session, Account, Category and Transaction. Account has both `balance` and `openingBalance`.
-- The backend code audited so far contains no application WebSocket gateway or Socket.IO server. The observed `ws://localhost:3000/_next/hmr` connection is Next.js development HMR, not a TrackYourMoney backend feature. Do not migrate that development-only connection into NestJS.
+- The backend code audited so far contains no application WebSocket gateway or Socket.IO server. The observed `ws://localhost:3000/_next/hmr` connection is Next.js development HMR, not the app's backend WebSocket. The NestJS gateway is available at the `/ws` Socket.IO namespace.
 
 ## Frontend contract
 
@@ -67,7 +67,7 @@ The existing Express app mounts these routes under `/api/v1`:
 - Migrated the existing auth contract into NestJS routes: signup, signin, refresh-token rotation, logout and current-user lookup. Cookie names, token implementation, server-side session hash, and TTL are reused from the existing backend.
 - Added a session-aware auth guard and migrated category list/create/rename routes with the existing response envelopes.
 - Added root scripts for the NestJS API, existing Next.js frontend, and legacy Express API. The legacy application remains available for rollback.
-- The Next.js frontend remains at `app/frontend` for now; it has not been moved or rewritten.
+- The Next.js frontend remains at `app/frontend`; the existing REST base URL and `/api/v1` paths are unchanged. The frontend has not yet been wired to consume the new WebSocket events.
 
 ### Current consolidated target
 
@@ -84,6 +84,7 @@ The backend package's start/build commands now target NestJS. Legacy Express rou
 | Accounts | GET, POST, PATCH, DELETE added; opening-balance handling included; runtime parity tests still required |
 | Transactions | GET, POST, PATCH, DELETE added; balance updates use Prisma transactions; runtime parity tests still required |
 | Database health | Added |
+| WebSocket | Authenticated Socket.IO namespace `/ws`; transaction lifecycle events broadcast per user |
 | WebSocket | No application WebSocket server found in the audited Express backend; the observed `/_next/hmr` connection is Next.js development HMR |
 
 ## Current verification gaps
