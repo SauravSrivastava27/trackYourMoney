@@ -42,7 +42,7 @@ async function refreshSession(): Promise<boolean> {
       });
   }
 
-  return refreshInFlight;
+  return refreshInFlight ?? Promise.resolve(false);
 }
 
 async function sendRequest(path: string, options: RequestInit) {
