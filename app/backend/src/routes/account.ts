@@ -124,6 +124,7 @@ router.post("/", requireAuth, async (req, res, next) => {
         currency: currency.toUpperCase(),
         type,
         balance: balance.toFixed(2),
+        openingBalance: balance.toFixed(2),
         userId,
       },
     });
@@ -178,22 +179,40 @@ router.patch(
 
       const input = parsed.data;
 
-      const account = await prisma.account.update({
-        where: { id: existing.id },
-        data: {
-          ...(input.name !== undefined && {
-            name: input.name,
-          }),
+      const account = await prisma.$transaction(async (tx) => {
+        const data: {
+          name?: string;
+          currency?: string;
+          type?: (typeof accountTypes)[number];
+          balance?: string;
+          openingBalance?: string;
+        } = {
+          ...(input.name !== undefined && { name: input.name }),
           ...(input.currency !== undefined && {
             currency: input.currency.toUpperCase(),
           }),
-          ...(input.type !== undefined && {
-            type: input.type,
-          }),
-          ...(input.balance !== undefined && {
-            balance: input.balance.toFixed(2),
-          }),
-        },
+          ...(input.type !== undefined && { type: input.type }),
+        };
+
+        if (input.balance !== undefined) {
+          // Treat the edited value as the desired current balance. Keep the
+          // recorded ledger intact by adjusting only the opening balance.
+          const transactions = await tx.transaction.findMany({
+            where: { accountId: existing.id, userId },
+            select: { amount: true, type: true },
+          });
+          const ledgerNet = transactions.reduce((sum, item) => {
+            const amount = Number(item.amount);
+            return sum + (item.type === "INCOME" ? amount : -amount);
+          }, 0);
+          data.balance = input.balance.toFixed(2);
+          data.openingBalance = (input.balance - ledgerNet).toFixed(2);
+        }
+
+        return tx.account.update({
+          where: { id: existing.id },
+          data,
+        });
       });
 
       res.status(200).json({

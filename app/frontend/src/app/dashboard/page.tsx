@@ -3,6 +3,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAccounts } from "../hooks/useAccounts";
+import { useTransactions } from "../hooks/useTransactions";
+import LoadingState from "../components/ui/LoadingState";
+import Alert from "../components/ui/Alert";
+import { refreshAuthSession } from "../lib/api";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
@@ -13,35 +19,18 @@ type User = {
   email: string;
 };
 
-const summaryCards = [
-  {
-    title: "Total Balance",
-    amount: "₹0.00",
-    description: "Across your accounts",
-    icon: "₹",
-  },
-  {
-    title: "Monthly Income",
-    amount: "₹0.00",
-    description: "Income received this month",
-    icon: "↗",
-  },
-  {
-    title: "Monthly Expenses",
-    amount: "₹0.00",
-    description: "Expenses this month",
-    icon: "↘",
-  },
-  {
-    title: "Monthly Savings",
-    amount: "₹0.00",
-    description: "Income minus expenses",
-    icon: "◈",
-  },
-];
+function formatMoney(value: number, currency = "INR") {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
 
 export default function DashboardPage() {
   const router = useRouter();
+  const accountsQuery = useAccounts();
+  const transactionsQuery = useTransactions();
 
   const [user, setUser] = useState<User | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -53,10 +42,20 @@ export default function DashboardPage() {
 
     async function verifySession() {
       try {
-        const response = await fetch(
+        let response = await fetch(
           `${API_URL}/api/v1/auth/me`,
-          { credentials: "include" }
+          { credentials: "include", cache: "no-store" }
         );
+
+        if (response.status === 401) {
+          const refreshed = await refreshAuthSession();
+          if (refreshed) {
+            response = await fetch(
+              `${API_URL}/api/v1/auth/me`,
+              { credentials: "include", cache: "no-store" }
+            );
+          }
+        }
 
         if (response.status === 401) {
           router.replace("/auth");
@@ -155,6 +154,35 @@ export default function DashboardPage() {
 
   const firstName =
     user.name?.trim().split(/\s+/)[0] || "there";
+  const accounts = accountsQuery.data ?? [];
+  const transactions = transactionsQuery.data ?? [];
+  const now = new Date();
+  const currentMonthTransactions = transactions.filter((item) => {
+    const date = new Date(item.occurredAt);
+    return date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear() &&
+      item.account.currency === "INR";
+  });
+  const totalBalance = accounts.reduce(
+    (sum, account) => sum + (
+      account.currency === "INR" ? Number(account.balance) : 0
+    ),
+    0
+  );
+  const monthlyIncome = currentMonthTransactions.reduce(
+    (sum, item) => sum + (item.type === "INCOME" ? Number(item.amount) : 0),
+    0
+  );
+  const monthlyExpenses = currentMonthTransactions.reduce(
+    (sum, item) => sum + (item.type === "EXPENSE" ? Number(item.amount) : 0),
+    0
+  );
+  const summaryCards = [
+    { title: "Total Balance", amount: formatMoney(totalBalance), description: "Current INR account balances, including opening balances", icon: "₹" },
+    { title: "Monthly Income", amount: formatMoney(monthlyIncome), description: "INR income this month", icon: "↗" },
+    { title: "Monthly Expenses", amount: formatMoney(monthlyExpenses), description: "INR expenses this month", icon: "↘" },
+    { title: "Monthly Savings", amount: formatMoney(monthlyIncome - monthlyExpenses), description: "This month's income minus expenses", icon: "◈" },
+  ];
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -234,20 +262,42 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="flex min-h-56 flex-col items-center justify-center py-8 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-2xl text-primary">
-                +
+            {transactionsQuery.isPending ? (
+              <LoadingState label="Loading recent transactions..." />
+            ) : transactionsQuery.isError ? (
+              <Alert variant="error">{transactionsQuery.error.message}</Alert>
+            ) : transactions.length === 0 ? (
+              <div className="flex min-h-56 flex-col items-center justify-center py-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-2xl text-primary">+</div>
+                <h3 className="mt-4 font-semibold">Start tracking your money</h3>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+                  Add your first income or expense to see it here.
+                </p>
+                <Link href="/transactions" className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+                  Add transaction
+                </Link>
               </div>
-
-              <h3 className="mt-4 font-semibold">
-                Start tracking your money
-              </h3>
-
-              <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-                Your transactions will appear here once you
-                start recording your income and expenses.
-              </p>
-            </div>
+            ) : (
+              <div className="mt-5 space-y-3">
+                {transactions.slice(0, 5).map((transaction) => (
+                  <div key={transaction.id} className="flex items-center gap-3 border-t border-border pt-3">
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${transaction.type === "INCOME" ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"}`}>
+                      {transaction.type === "INCOME" ? "↗" : "↘"}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{transaction.title}</p>
+                      <p className="text-xs text-muted-foreground">{transaction.account.name} · {new Date(transaction.occurredAt).toLocaleDateString("en-IN")}</p>
+                    </div>
+                    <p className={`text-sm font-semibold ${transaction.type === "INCOME" ? "text-emerald-600" : "text-red-600"}`}>
+                      {transaction.type === "INCOME" ? "+" : "−"}{formatMoney(Number(transaction.amount), transaction.account.currency)}
+                    </p>
+                  </div>
+                ))}
+                <Link href="/transactions" className="inline-flex pt-2 text-sm font-semibold text-primary hover:underline">
+                  View all transactions →
+                </Link>
+              </div>
+            )}
           </article>
 
           {/* Budget */}

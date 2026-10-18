@@ -9,6 +9,7 @@ import {
 import type { ComponentType } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { refreshAuthSession } from "../lib/api";
 import {
     usePathname,
     useRouter,
@@ -24,6 +25,7 @@ import {
     LogOut,
     Wallet,
     ArrowLeftRight,
+    Tags,
     PiggyBank,
     ChartNoAxesCombined,
     Target,
@@ -64,7 +66,8 @@ const navGroups: NavGroup[] = [
                 icon: Wallet,
                 implemented: true,
             },
-            { label: "Transactions", icon: ArrowLeftRight },
+            { label: "Transactions", href: "/transactions", icon: ArrowLeftRight, implemented: true },
+            { label: "Categories", href: "/categories", icon: Tags, implemented: true },
             { label: "Budgets", icon: PiggyBank },
         ],
     },
@@ -73,9 +76,11 @@ const navGroups: NavGroup[] = [
         items: [
             {
                 label: "Reports & Analytics",
+                href: "/reports",
                 icon: ChartNoAxesCombined,
+                implemented: true,
             },
-            { label: "AI Insights", icon: Sparkles },
+            { label: "AI Insights", href: "/insights", icon: Sparkles, implemented: true },
         ],
     },
     {
@@ -259,13 +264,23 @@ export default function Header() {
             setAuthLoading(true);
 
             try {
-                const response = await fetch(
+                let response = await fetch(
                     `${apiUrl}/api/v1/auth/me`,
                     {
                         credentials: "include",
                         cache: "no-store",
                     }
                 );
+
+                if (response.status === 401) {
+                    const refreshed = await refreshAuthSession();
+                    if (refreshed) {
+                        response = await fetch(
+                            `${apiUrl}/api/v1/auth/me`,
+                            { credentials: "include", cache: "no-store" }
+                        );
+                    }
+                }
 
                 if (!response.ok) {
                     if (!cancelled) setUser(null);
@@ -365,11 +380,15 @@ export default function Header() {
                 >
                     <Image
                         src="/logo.svg"
-                        alt="FinTrack AI"
-                        width={40}
-                        height={40}
+                        alt=""
+                        width={36}
+                        height={36}
                         priority
+                        className="h-9 w-9"
                     />
+                    <span className="ml-2 text-lg font-bold tracking-tight text-foreground">
+                        FinTrack <span className="text-primary">AI</span>
+                    </span>
                 </Link>
 
                 {authLoading ? (

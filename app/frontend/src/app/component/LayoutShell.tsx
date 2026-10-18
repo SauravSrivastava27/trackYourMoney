@@ -1,8 +1,8 @@
-
 "use client";
 
 import Header from "./Header";
 import Footer from "./Footer";
+import ErrorBoundary from "./ErrorBoundary";
 
 export default function LayoutShell({
   children,
@@ -14,7 +14,7 @@ export default function LayoutShell({
       <Header />
 
       <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-6 pt-[56px]">
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
       </main>
 
       <Footer />

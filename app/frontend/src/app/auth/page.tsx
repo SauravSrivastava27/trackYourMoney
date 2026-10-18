@@ -7,6 +7,7 @@ import {
   type FormEvent,
 } from "react";
 import Link from "next/link";
+import { refreshAuthSession } from "../lib/api";
 import { useRouter } from "next/navigation";
 import {
   Eye,
@@ -42,13 +43,23 @@ export default function AuthPage() {
 
     async function checkSession() {
       try {
-        const response = await fetch(
+        let response = await fetch(
           `${apiUrl}/api/v1/auth/me`,
           {
             credentials: "include",
             cache: "no-store",
           }
         );
+
+        if (response.status === 401) {
+          const refreshed = await refreshAuthSession();
+          if (refreshed) {
+            response = await fetch(
+              `${apiUrl}/api/v1/auth/me`,
+              { credentials: "include", cache: "no-store" }
+            );
+          }
+        }
 
         if (response.ok && !cancelled) {
           router.replace("/dashboard");
@@ -116,6 +127,7 @@ export default function AuthPage() {
               name: name.trim(),
               email: normalizedEmail,
               password,
+              acceptedTerms: true,
             }
           : {
               email: normalizedEmail,

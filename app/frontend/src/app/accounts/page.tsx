@@ -5,6 +5,10 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import Button from "../components/ui/Button";
+import Alert from "../components/ui/Alert";
+import LoadingState from "../components/ui/LoadingState";
+import Modal from "../components/ui/Modal";
 import {
   useAccounts,
   useCreateAccount,
@@ -313,7 +317,7 @@ export default function AccountsPage() {
               htmlFor="account-balance"
               className="mb-2 block text-sm font-medium"
             >
-              Balance
+              {editingId ? "Current balance" : "Opening balance"}
             </label>
 
             <input
@@ -332,6 +336,11 @@ export default function AccountsPage() {
               required
               className="w-full rounded-lg border border-gray-300 bg-transparent p-3 dark:border-zinc-600"
             />
+            <p className="mt-2 text-xs leading-5 text-gray-500">
+              {editingId
+                ? "This sets the account's current balance directly. Existing transactions are not replayed when you change it."
+                : "Enter money already in this account before you start recording transactions. If you are starting from zero and will add your salary as an income transaction, keep this at ₹0."}
+            </p>
           </div>
 
           {errorMessage && (
@@ -385,24 +394,14 @@ export default function AccountsPage() {
         </h2>
 
         {accountsQuery.isPending ? (
-          <p className="mt-4 text-gray-500">
-            Loading accounts...
-          </p>
+          <LoadingState label="Loading accounts..." className="mt-4" />
         ) : accountsQuery.isError && accounts.length === 0 ? (
-          <div
-            role="alert"
-            className="mt-4 rounded-xl border border-red-200 p-5 text-sm text-red-600"
-          >
-            {accountsQuery.error.message}
-
-            <button
-              type="button"
-              onClick={() => void accountsQuery.refetch()}
-              className="ml-3 underline"
-            >
-              Retry
-            </button>
-          </div>
+          <Alert variant="error" className="mt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>{accountsQuery.error.message}</span>
+              <Button variant="secondary" onClick={() => void accountsQuery.refetch()}>Retry</Button>
+            </div>
+          </Alert>
         ) : accounts.length === 0 ? (
           <div className="mt-4 rounded-2xl border border-dashed p-8 text-center">
             <p className="font-medium">No accounts yet</p>
@@ -482,85 +481,42 @@ export default function AccountsPage() {
         )}
       </section>
 
-      {accountToDelete && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
-          onMouseDown={(event) => {
-            if (
-              event.target === event.currentTarget &&
-              !deleting
-            ) {
+      <Modal
+        open={Boolean(accountToDelete)}
+        onClose={() => {
+          if (!deleting) setAccountToDelete(null);
+        }}
+        title="Delete account?"
+        description={accountToDelete
+          ? `Are you sure you want to delete “${accountToDelete.name}”? This action cannot be undone.`
+          : undefined}
+        size="sm"
+      >
+        {deleteMutation.isError && (
+          <Alert variant="error" className="mb-4">
+            {deleteMutation.error.message}
+          </Alert>
+        )}
+        <div className="flex justify-end gap-3">
+          <Button
+            variant="secondary"
+            disabled={deleting}
+            onClick={() => {
               setAccountToDelete(null);
-            }
-          }}
-        >
-          <section
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="delete-title"
-            aria-describedby="delete-description"
-            className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900"
+              deleteMutation.reset();
+            }}
           >
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-950">
-                <span className="text-2xl" aria-hidden="true">
-                  !
-                </span>
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <h2
-                  id="delete-title"
-                  className="text-lg font-semibold"
-                >
-                  Delete account?
-                </h2>
-
-                <p
-                  id="delete-description"
-                  className="mt-2 break-words text-sm leading-6 text-gray-600 dark:text-zinc-300"
-                >
-                  Are you sure you want to delete{" "}
-                  <strong>{accountToDelete.name}</strong>?
-                  This action cannot be undone.
-                </p>
-
-                {deleteMutation.isError && (
-                  <p
-                    role="alert"
-                    className="mt-3 text-sm text-red-600"
-                  >
-                    {deleteMutation.error.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => {
-                  setAccountToDelete(null);
-                  deleteMutation.reset();
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-100 disabled:opacity-50 dark:border-zinc-600 dark:hover:bg-zinc-800"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => void confirmDelete()}
-                className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {deleting ? "Deleting..." : "Delete account"}
-              </button>
-            </div>
-          </section>
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            disabled={deleting}
+            onClick={() => void confirmDelete()}
+          >
+            {deleting ? "Deleting..." : "Delete account"}
+          </Button>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
