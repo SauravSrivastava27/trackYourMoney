@@ -75,7 +75,9 @@ const navGroups: NavGroup[] = [
         items: [
             {
                 label: "Reports & Analytics",
+                href: "/reports",
                 icon: ChartNoAxesCombined,
+                implemented: true,
             },
             { label: "AI Insights", href: "/insights", icon: Sparkles, implemented: true },
         ],
