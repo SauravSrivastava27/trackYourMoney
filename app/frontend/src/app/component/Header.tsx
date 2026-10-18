@@ -369,11 +369,15 @@ export default function Header() {
                 >
                     <Image
                         src="/logo.svg"
-                        alt="FinTrack AI"
-                        width={40}
-                        height={40}
+                        alt=""
+                        width={36}
+                        height={36}
                         priority
+                        className="h-9 w-9"
                     />
+                    <span className="ml-2 text-lg font-bold tracking-tight text-foreground">
+                        FinTrack <span className="text-primary">AI</span>
+                    </span>
                 </Link>
 
                 {authLoading ? (
