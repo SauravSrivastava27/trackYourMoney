@@ -6,6 +6,7 @@ import prisma from "./lib/prisma.js";
 import accountRouter from "./routes/account.js";
 import authRouter from "./routes/auth.js";
 import transactionRouter from "./routes/transaction.js";
+import categoryRouter from "./routes/category.js";
 import cookieParser from "cookie-parser";
 
 const app = express();
@@ -25,6 +26,7 @@ app.use(cookieParser());
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/accounts", accountRouter);
 app.use("/api/v1/transactions", transactionRouter);
+app.use("/api/v1/categories", categoryRouter);
 
 
 app.get("/api/v1/health/db", async (_req, res, next) => {
