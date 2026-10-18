@@ -18,18 +18,21 @@ export default function ReportsPage() {
   const query = useTransactions();
   const rows = query.data ?? [];
   const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const nowTime = now.getTime();
 
   const filtered = useMemo(() => rows.filter((row) => {
     const date = new Date(row.occurredAt);
-    if (row.account.currency !== "INR" || date > now) return false;
-    if (period === "year") return date.getFullYear() === now.getFullYear();
+    if (row.account.currency !== "INR" || date.getTime() > nowTime) return false;
+    if (period === "year") return date.getFullYear() === currentYear;
     if (period === "quarter") {
       return date.getFullYear() === now.getFullYear() &&
-        Math.floor(date.getMonth() / 3) === Math.floor(now.getMonth() / 3);
+        Math.floor(date.getMonth() / 3) === Math.floor(currentMonth / 3);
     }
     return date.getFullYear() === now.getFullYear() &&
-      date.getMonth() === now.getMonth();
-  }), [rows, period, now.getFullYear(), now.getMonth()]);
+      date.getMonth() === currentMonth;
+  }), [rows, period, currentYear, currentMonth, nowTime]);
 
   const income = filtered.reduce((sum, row) => sum + (row.type === "INCOME" ? Number(row.amount) : 0), 0);
   const expenses = filtered.reduce((sum, row) => sum + (row.type === "EXPENSE" ? Number(row.amount) : 0), 0);
@@ -83,7 +86,7 @@ export default function ReportsPage() {
 
           <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Expenses by category</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Only INR transactions in the selected period are included.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Only INR transactions in the selected period are included. The report is based on the latest 100 transactions returned by the API.</p>
             {categoryRows.length === 0 ? (
               <p className="mt-6 rounded-xl bg-muted/50 p-6 text-center text-sm text-muted-foreground">
                 No expenses found for this period. Add categories and transactions to get a breakdown.
