@@ -74,16 +74,13 @@ export default function ReportsPage() {
       {!query.isPending && !query.isError && (
         <>
           <section className="grid gap-4 sm:grid-cols-3">
-            {[
-              { label: "Income", value: income, color: "text-emerald-600" },
-              { label: "Expenses", value: expenses, color: "text-red-600" },
-              { label: "Net cash flow", value: income - expenses, color: income >= expenses ? "text-emerald-600" : "text-red-600" },
-            ].map((item) => (
-              <article key={item.label} className="rounded-2xl border border-border bg-card p-5">
-                <p className="text-sm text-muted-foreground">{item.label}</p>
-                <p className={`mt-2 text-2xl font-bold ${item.color}`}>{money(item.value)}</p>
-              </article>
-            ))}
+            <StatCard title="Income" value={money(income)} tone="positive" />
+            <StatCard title="Expenses" value={money(expenses)} tone="negative" />
+            <StatCard
+              title="Net cash flow"
+              value={money(income - expenses)}
+              tone={income >= expenses ? "positive" : "negative"}
+            />
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-5 sm:p-6">
