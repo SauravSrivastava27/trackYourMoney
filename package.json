@@ -1,0 +1,17 @@
+{
+  "name": "trackyourmoney",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/api"
+  ],
+  "scripts": {
+    "api:dev": "npm run dev --workspace @trackyourmoney/api",
+    "api:build": "npm run build --workspace @trackyourmoney/api",
+    "api:typecheck": "npm run typecheck --workspace @trackyourmoney/api",
+    "web:dev": "npm --prefix app/frontend run dev",
+    "web:build": "npm --prefix app/frontend run build",
+    "legacy:api:dev": "npm --prefix app/backend run dev",
+    "legacy:api:build": "npm --prefix app/backend run build"
+  }
+}
