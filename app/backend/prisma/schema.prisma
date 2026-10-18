@@ -32,6 +32,8 @@ model User {
   categories   Category[]
   transactions Transaction[]
   sessions     Session[]
+  budgets      Budget[]
+  savingsGoals SavingsGoal[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -94,4 +96,35 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model Budget {
+  id           String   @id
+  name         String
+  amount       Decimal  @db.Decimal(14, 2)
+  currency     String   @default("INR")
+  period       String   @default("MONTHLY")
+  categoryName String?
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model SavingsGoal {
+  id            String    @id
+  name          String
+  targetAmount  Decimal   @db.Decimal(14, 2)
+  currentAmount Decimal   @default(0) @db.Decimal(14, 2)
+  currency      String    @default("INR")
+  targetDate    DateTime?
+  status        String    @default("ACTIVE")
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
 }
