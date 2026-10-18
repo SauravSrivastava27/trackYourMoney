@@ -42,13 +42,26 @@ export default function AuthPage() {
 
     async function checkSession() {
       try {
-        const response = await fetch(
+        let response = await fetch(
           `${apiUrl}/api/v1/auth/me`,
           {
             credentials: "include",
             cache: "no-store",
           }
         );
+
+        if (response.status === 401) {
+          const refreshResponse = await fetch(
+            `${apiUrl}/api/v1/auth/refresh`,
+            { method: "POST", credentials: "include" }
+          );
+          if (refreshResponse.ok) {
+            response = await fetch(
+              `${apiUrl}/api/v1/auth/me`,
+              { credentials: "include", cache: "no-store" }
+            );
+          }
+        }
 
         if (response.ok && !cancelled) {
           router.replace("/dashboard");
@@ -116,6 +129,7 @@ export default function AuthPage() {
               name: name.trim(),
               email: normalizedEmail,
               password,
+              acceptedTerms: true,
             }
           : {
               email: normalizedEmail,
