@@ -166,10 +166,10 @@ export default function DashboardPage() {
     0
   );
   const summaryCards = [
-    { title: "Total Balance", amount: formatINR(totalBalance), description: "Across INR accounts", icon: "₹" },
-    { title: "Monthly Income", amount: formatINR(monthlyIncome), description: "INR income this month", icon: "↗" },
-    { title: "Monthly Expenses", amount: formatINR(monthlyExpenses), description: "INR expenses this month", icon: "↘" },
-    { title: "Monthly Savings", amount: formatINR(monthlyIncome - monthlyExpenses), description: "Income minus expenses", icon: "◈" },
+    { title: "Total Balance", amount: formatMoney(totalBalance), description: "Across INR accounts", icon: "₹" },
+    { title: "Monthly Income", amount: formatMoney(monthlyIncome), description: "INR income this month", icon: "↗" },
+    { title: "Monthly Expenses", amount: formatMoney(monthlyExpenses), description: "INR expenses this month", icon: "↘" },
+    { title: "Monthly Savings", amount: formatMoney(monthlyIncome - monthlyExpenses), description: "Income minus expenses", icon: "◈" },
   ];
 
   return (
