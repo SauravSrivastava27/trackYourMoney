@@ -263,13 +263,26 @@ export default function Header() {
             setAuthLoading(true);
 
             try {
-                const response = await fetch(
+                let response = await fetch(
                     `${apiUrl}/api/v1/auth/me`,
                     {
                         credentials: "include",
                         cache: "no-store",
                     }
                 );
+
+                if (response.status === 401) {
+                    const refreshResponse = await fetch(
+                        `${apiUrl}/api/v1/auth/refresh`,
+                        { method: "POST", credentials: "include" }
+                    );
+                    if (refreshResponse.ok) {
+                        response = await fetch(
+                            `${apiUrl}/api/v1/auth/me`,
+                            { credentials: "include", cache: "no-store" }
+                        );
+                    }
+                }
 
                 if (!response.ok) {
                     if (!cancelled) setUser(null);
