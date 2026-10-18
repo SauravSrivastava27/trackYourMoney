@@ -69,14 +69,20 @@ The existing Express app mounts these routes under `/api/v1`:
 - Added root scripts for the NestJS API, existing Next.js frontend, and legacy Express API. The legacy application remains available for rollback.
 - The Next.js frontend remains at `app/frontend` for now; it has not been moved or rewritten.
 
+### Current consolidated target
+
+The NestJS implementation now lives in the existing `app/backend` project. There is no planned second backend directory; `app/frontend` remains the single Next.js frontend. The root scripts delegate to those existing project folders.
+
+The backend package's start/build commands now target NestJS. Legacy Express route files are excluded from the NestJS TypeScript build while migration is in progress; they are not mounted by the NestJS bootstrap.
+
 ### Endpoint parity tracker
 
 | Endpoint group | Status |
 |---|---|
-| Auth | Initial NestJS implementation added; runtime parity tests still required |
+| Auth | Signup, signin, refresh rotation, logout and current-user routes added; runtime parity tests still required |
 | Categories | GET, POST, PATCH added; runtime parity tests still required |
-| Accounts | Not yet migrated |
-| Transactions | Not yet migrated |
+| Accounts | GET, POST, PATCH, DELETE added; opening-balance handling included; runtime parity tests still required |
+| Transactions | GET, POST, PATCH, DELETE added; balance updates use Prisma transactions; runtime parity tests still required |
 | Database health | Added |
 | WebSocket | No application WebSocket server found in the audited Express backend; the observed `/_next/hmr` connection is Next.js development HMR |
 
