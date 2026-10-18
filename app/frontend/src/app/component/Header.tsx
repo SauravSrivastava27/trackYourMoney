@@ -64,7 +64,7 @@ const navGroups: NavGroup[] = [
                 icon: Wallet,
                 implemented: true,
             },
-            { label: "Transactions", icon: ArrowLeftRight },
+            { label: "Transactions", href: "/transactions", icon: ArrowLeftRight, implemented: true },
             { label: "Budgets", icon: PiggyBank },
         ],
     },
