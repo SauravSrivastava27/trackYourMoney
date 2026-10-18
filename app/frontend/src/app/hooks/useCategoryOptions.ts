@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../lib/api";
 
 export type CategoryOption = {
@@ -15,6 +15,23 @@ export function useCategoryOptions() {
     queryFn: async () => {
       const response = await apiRequest<CategoryOption[]>("/api/v1/categories");
       return response.data ?? [];
+    },
+  });
+}
+
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; type: "INCOME" | "EXPENSE" }) => {
+      const response = await apiRequest<CategoryOption>("/api/v1/categories", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      if (!response.data) throw new Error("Category data was missing.");
+      return response.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 }
