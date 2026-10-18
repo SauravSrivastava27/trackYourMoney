@@ -59,8 +59,30 @@ The existing Express app mounts these routes under `/api/v1`:
 6. Run type checks, builds, API integration tests and frontend regression checks.
 7. Switch deployment only after parity; keep a rollback path to Express.
 
+## Implementation status on this branch
+
+- Added a standalone NestJS API package under `apps/api` with bootstrap, global configuration, validation pipe, CORS, Helmet, cookie parsing, and shutdown hooks.
+- Added a lifecycle-managed Prisma service using the existing generated Prisma client and PostgreSQL adapter. The current schema and migrations remain in `app/backend/prisma`; no database migration was run.
+- Added `GET /api/v1/health/db`.
+- Migrated the existing auth contract into NestJS routes: signup, signin, refresh-token rotation, logout and current-user lookup. Cookie names, token implementation, server-side session hash, and TTL are reused from the existing backend.
+- Added a session-aware auth guard and migrated category list/create/rename routes with the existing response envelopes.
+- Added root scripts for the NestJS API, existing Next.js frontend, and legacy Express API. The legacy application remains available for rollback.
+- The Next.js frontend remains at `app/frontend` for now; it has not been moved or rewritten.
+
+### Endpoint parity tracker
+
+| Endpoint group | Status |
+|---|---|
+| Auth | Initial NestJS implementation added; runtime parity tests still required |
+| Categories | GET, POST, PATCH added; runtime parity tests still required |
+| Accounts | Not yet migrated |
+| Transactions | Not yet migrated |
+| Database health | Added |
+| WebSocket | No application WebSocket server found in the audited Express backend; the observed `/_next/hmr` connection is Next.js development HMR |
+
 ## Current verification gaps
 
 - The repository connector can create and inspect GitHub files, but it does not execute the repository's npm scripts.
+- No root lockfile has been generated yet; run npm install from the repository root locally and commit the resulting package-lock after reviewing the dependency graph.
 - Local build, database connectivity, end-to-end tests, and runtime WebSocket behavior have not been run in this session.
 - Authentication route review is in progress; complete parity must be verified before cutover.
