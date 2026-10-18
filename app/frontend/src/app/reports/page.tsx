@@ -48,11 +48,11 @@ export default function ReportsPage() {
 
   return (
     <div className="mx-auto w-full space-y-7 py-8">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-widest text-primary">Insights</p>
-        <h1 className="mt-2 text-3xl font-bold">Reports & Analytics</h1>
-        <p className="mt-2 text-muted-foreground">Understand income and spending from your recorded transactions.</p>
-      </header>
+      <PageHeader
+        eyebrow="Insights"
+        title="Reports & Analytics"
+        description="Understand income and spending from your recorded transactions."
+      />
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Reporting period">
         {([
