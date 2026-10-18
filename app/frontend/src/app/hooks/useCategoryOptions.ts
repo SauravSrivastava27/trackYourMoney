@@ -19,6 +19,10 @@ export function useCategoryOptions() {
   });
 }
 
+export function useCategories() {
+  return useCategoryOptions();
+}
+
 export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
