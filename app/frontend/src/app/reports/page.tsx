@@ -27,7 +27,7 @@ export default function ReportsPage() {
     if (row.account.currency !== "INR" || date.getTime() > nowTime) return false;
     if (period === "year") return date.getFullYear() === currentYear;
     if (period === "quarter") {
-      return date.getFullYear() === now.getFullYear() &&
+      return date.getFullYear() === currentYear &&
         Math.floor(date.getMonth() / 3) === Math.floor(currentMonth / 3);
     }
     return date.getFullYear() === now.getFullYear() &&
