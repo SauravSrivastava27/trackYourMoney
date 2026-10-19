@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "incremental": false
+  },
+  "include": [
+    "src/main.ts",
+    "src/nest-app.module.ts",
+    "src/nest/**/*.ts",
+    "src/lib/authTokens.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/routes",
+    "src/middleware",
+    "src/app.ts",
+    "src/server.ts",
+    "**/*.spec.ts"
+  ]
+}
