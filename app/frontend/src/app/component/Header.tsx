@@ -9,7 +9,6 @@ import {
 import type { ComponentType } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { refreshAuthSession } from "../lib/api";
 import {
     usePathname,
     useRouter,
@@ -256,15 +255,21 @@ export default function Header() {
         setIsDark(dark);
     }, []);
 
-    // Check the session on every page, including /auth.
+    // Public pages do not need a header-level session probe.
+    // The landing page is intentionally anonymous; /auth owns its own check.
     useEffect(() => {
+        if (pathname === "/" || pathname === "/auth") {
+            setUser(null);
+            setAuthLoading(false);
+            return;
+        }
+
         let cancelled = false;
 
         async function loadUser() {
             setAuthLoading(true);
-
             try {
-                let response = await fetch(
+                const response = await fetch(
                     `${apiUrl}/api/v1/auth/me`,
                     {
                         credentials: "include",
@@ -272,26 +277,13 @@ export default function Header() {
                     }
                 );
 
-                if (response.status === 401) {
-                    const refreshed = await refreshAuthSession();
-                    if (refreshed) {
-                        response = await fetch(
-                            `${apiUrl}/api/v1/auth/me`,
-                            { credentials: "include", cache: "no-store" }
-                        );
-                    }
-                }
-
                 if (!response.ok) {
                     if (!cancelled) setUser(null);
                     return;
                 }
 
                 const data = await response.json();
-
-                if (!cancelled) {
-                    setUser(data.user ?? data);
-                }
+                if (!cancelled) setUser(data.user ?? data);
             } catch {
                 if (!cancelled) setUser(null);
             } finally {
@@ -300,7 +292,6 @@ export default function Header() {
         }
 
         void loadUser();
-
         return () => {
             cancelled = true;
         };
