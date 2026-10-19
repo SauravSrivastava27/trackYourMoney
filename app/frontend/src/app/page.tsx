@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,15 +16,6 @@ import {
   CheckCircle2,
   LoaderCircle,
 } from "lucide-react";
-
-type User = {
-  id?: string;
-  name?: string;
-  fullName?: string;
-  email?: string;
-  image?: string | null;
-  profileImage?: string | null;
-};
 
 const features = [
   {
@@ -61,52 +52,8 @@ const benefits = [
 ];
 
 export default function HomePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [checkingSession, setCheckingSession] = useState(true);
-
-  const apiUrl = (
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:5000"
-  ).replace(/\/$/, "");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function checkSession() {
-      try {
-        const response = await fetch(
-          `${apiUrl}/api/v1/auth/me`,
-          {
-            credentials: "include",
-            cache: "no-store",
-          }
-        );
-
-        if (!response.ok) {
-          if (!cancelled) setUser(null);
-          return;
-        }
-
-        const data = await response.json();
-
-        if (!cancelled) {
-          setUser(data.user ?? data);
-        }
-      } catch {
-        if (!cancelled) setUser(null);
-      } finally {
-        if (!cancelled) {
-          setCheckingSession(false);
-        }
-      }
-    }
-
-    void checkSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [apiUrl]);
+  const user = null;
+  const checkingSession = false;
 
   const displayName =
     user?.name?.trim() ||
