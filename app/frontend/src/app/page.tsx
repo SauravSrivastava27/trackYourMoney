@@ -17,6 +17,11 @@ import {
   LoaderCircle,
 } from "lucide-react";
 
+type User = {
+  name?: string;
+  fullName?: string;
+};
+
 const features = [
   {
     icon: ArrowLeftRight,
@@ -52,7 +57,7 @@ const benefits = [
 ];
 
 export default function HomePage() {
-  const user = null;
+  const user: User | null = null;
   const checkingSession = false;
 
   const displayName =
