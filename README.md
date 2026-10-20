@@ -18,6 +18,7 @@ FinTrack AI combines a modern React interface, a secure Node.js backend, Postgre
 - [Security](#security)
 - [Testing](#testing)
 - [Deployment](#deployment)
+- [Financial Data Integrity Principles](#financial-data-integrity-principles)
 - [Development Roadmap](#development-roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -110,3 +111,19 @@ AI-generated insights will be advisory. Financial calculations and transaction r
 
 - Vitest
 - Supertest
+
+## Financial Data Integrity Principles
+
+Personal finance software must preserve the accuracy and ownership of every transaction. These principles guide implementation and future reviews:
+
+- **Use decimal-safe money values.** Avoid binary floating-point arithmetic for currency calculations. Prefer integer minor units (such as paise) or a database decimal type with explicit precision and rounding rules.
+- **Validate transaction inputs at the boundary.** Check amount, currency, transaction type, date, category, and account ownership on the server. Client-side validation improves usability but is not a security boundary.
+- **Enforce ownership on every operation.** Derive the authenticated user from the verified session and scope reads, updates, and deletes to resources that user is allowed to access.
+- **Keep balance changes consistent.** When a transaction affects a stored balance, update related records in a database transaction so partial failures cannot leave inconsistent state.
+- **Make retries safe where needed.** For import jobs or other retryable write operations, use an idempotency strategy or stable external reference to reduce duplicate transactions.
+- **Define reporting rules explicitly.** Document how refunds, transfers, pending transactions, time zones, and month boundaries affect totals so dashboard figures remain consistent.
+- **Test financial edge cases.** Cover zero and negative amounts where applicable, rounding boundaries, duplicate submissions, concurrent updates, month-end dates, and users attempting to access another user's data.
+- **Treat AI output as untrusted advice.** Validate any proposed category or insight, never let a model directly mutate financial records, and keep calculated totals grounded in persisted transaction data.
+
+These are engineering principles, not a claim that every item is already implemented. The actual behavior should be verified against the current codebase and automated tests.
+
