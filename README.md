@@ -9,19 +9,7 @@ FinTrack AI combines a modern React interface, a secure Node.js backend, Postgre
 - [Project Overview](#project-overview)
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [API Endpoints](#api-endpoints)
-- [Database Design](#database-design)
-- [Security](#security)
-- [Testing](#testing)
-- [Deployment](#deployment)
 - [Financial Data Integrity Principles](#financial-data-integrity-principles)
-- [Development Roadmap](#development-roadmap)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Project Overview
 
@@ -126,4 +114,3 @@ Personal finance software must preserve the accuracy and ownership of every tran
 - **Treat AI output as untrusted advice.** Validate any proposed category or insight, never let a model directly mutate financial records, and keep calculated totals grounded in persisted transaction data.
 
 These are engineering principles, not a claim that every item is already implemented. The actual behavior should be verified against the current codebase and automated tests.
-
