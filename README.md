@@ -11,6 +11,7 @@ FinTrack AI combines a modern React interface, a secure Node.js backend, Postgre
 - [Technology Stack](#technology-stack)
 - [Financial Data Integrity Principles](#financial-data-integrity-principles)
 - [Project Documentation](#project-documentation)
+- [Feature Status and Verification](#feature-status-and-verification)
 
 ## Project Overview
 
@@ -125,3 +126,14 @@ The repository's `docs/` directory contains focused guides for implementation an
 - [Financial balance rules](docs/FINANCIAL_BALANCE_RULES.md) — documented rules for maintaining consistent financial balances.
 
 Use these guides alongside the current source code; documentation should not be treated as proof that a behavior is implemented or tested.
+
+## Feature Status and Verification
+
+The feature lists above describe the product's intended scope; they are not a guarantee that every capability is currently available. Before treating a feature as complete:
+
+1. Inspect the current implementation and relevant API or UI paths.
+2. Run the tests that cover the behavior, and add tests for important gaps.
+3. Verify authorization, validation, and failure handling for sensitive operations.
+4. Update this README and the relevant guide when actual behavior or setup instructions change.
+
+If a feature is planned, partially implemented, or unverified, describe it that way in project updates rather than presenting it as production-ready.
