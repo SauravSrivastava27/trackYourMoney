@@ -12,6 +12,7 @@ FinTrack AI combines a modern React interface, a secure Node.js backend, Postgre
 - [Financial Data Integrity Principles](#financial-data-integrity-principles)
 - [Project Documentation](#project-documentation)
 - [Feature Status and Verification](#feature-status-and-verification)
+- [CSV Transaction Import Safety Checklist](#csv-transaction-import-safety-checklist)
 
 ## Project Overview
 
@@ -137,3 +138,17 @@ The feature lists above describe the product's intended scope; they are not a gu
 4. Update this README and the relevant guide when actual behavior or setup instructions change.
 
 If a feature is planned, partially implemented, or unverified, describe it that way in project updates rather than presenting it as production-ready.
+
+## CSV Transaction Import Safety Checklist
+
+CSV imports can introduce malformed, duplicated, or incorrectly interpreted financial records. Use this checklist when implementing or reviewing an import flow:
+
+1. **Validate the file.** Enforce an allowed format and reasonable file-size and row-count limits; do not trust the filename or browser-provided content type alone.
+2. **Validate each row on the server.** Check required columns, date formats, currency, transaction type, amount precision, and category/account ownership. Reject or clearly report invalid rows.
+3. **Preview before saving.** Show parsed values and validation errors so users can catch incorrect column mappings or date/decimal interpretation before confirming an import.
+4. **Define duplicate handling.** Establish a documented matching strategy for repeated uploads, such as a stable source transaction identifier where available. Avoid silently assuming that two similar-looking transactions are duplicates.
+5. **Keep writes consistent.** Decide whether an import is all-or-nothing or supports partial success, and report that behavior clearly. Use database transactions where needed to prevent unintended partial updates.
+6. **Protect sensitive data.** Do not log full transaction rows or other financial details unnecessarily; ensure imported records are scoped to the authenticated user.
+7. **Test failure cases.** Include empty files, malformed rows, unexpected encodings, oversized files, duplicate uploads, and failures during persistence.
+
+This checklist is implementation guidance, not confirmation that CSV import currently supports these safeguards. Verify the actual behavior in code and tests before describing it as complete.
