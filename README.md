@@ -13,6 +13,7 @@ FinTrack AI combines a modern React interface, a secure Node.js backend, Postgre
 - [Project Documentation](#project-documentation)
 - [Feature Status and Verification](#feature-status-and-verification)
 - [CSV Transaction Import Safety Checklist](#csv-transaction-import-safety-checklist)
+- [CSV Export Safety](#csv-export-safety)
 
 ## Project Overview
 
@@ -152,3 +153,17 @@ CSV imports can introduce malformed, duplicated, or incorrectly interpreted fina
 7. **Test failure cases.** Include empty files, malformed rows, unexpected encodings, oversized files, duplicate uploads, and failures during persistence.
 
 This checklist is implementation guidance, not confirmation that CSV import currently supports these safeguards. Verify the actual behavior in code and tests before describing it as complete.
+
+## CSV Export Safety
+
+Exported transaction data may be opened in spreadsheet applications. Text fields controlled by users or external sources—such as merchant names, notes, and categories—can be interpreted as spreadsheet formulas if they begin with formula-triggering characters.
+
+When implementing or reviewing CSV export:
+
+1. **Guard against formula injection.** Define and apply a consistent policy for untrusted text cells that begin with characters such as `=`, `+`, `-`, or `@`. Consider spreadsheet behavior for leading tabs, carriage returns, and line feeds as well.
+2. **Do not rely on CSV quoting alone.** Quoting and escaping delimiters protects CSV structure, but does not necessarily stop spreadsheet software from evaluating a cell as a formula.
+3. **Preserve financial values accurately.** Apply text-cell protections without silently changing the underlying transaction records or corrupting legitimate numeric amounts and dates.
+4. **Test spreadsheet-facing output.** Include malicious-looking merchant names and notes, embedded quotes, commas, and newlines. Verify the exported file in the spreadsheet applications the project intends to support.
+5. **Document export behavior.** Explain any normalization applied to exported text so users understand differences between a spreadsheet-safe export and the original stored data.
+
+This guidance describes risks and review criteria; it does not assert that formula-injection protections are already implemented. Confirm safeguards in the export code and tests before claiming coverage.
