@@ -14,6 +14,7 @@ FinTrack AI combines a modern React interface, a secure Node.js backend, Postgre
 - [Feature Status and Verification](#feature-status-and-verification)
 - [CSV Transaction Import Safety Checklist](#csv-transaction-import-safety-checklist)
 - [CSV Export Safety](#csv-export-safety)
+- [AI Insight Validation Checklist](#ai-insight-validation-checklist)
 
 ## Project Overview
 
@@ -167,3 +168,16 @@ When implementing or reviewing CSV export:
 5. **Document export behavior.** Explain any normalization applied to exported text so users understand differences between a spreadsheet-safe export and the original stored data.
 
 This guidance describes risks and review criteria; it does not assert that formula-injection protections are already implemented. Confirm safeguards in the export code and tests before claiming coverage.
+
+## AI Insight Validation Checklist
+
+AI-generated summaries and recommendations can sound confident even when their inputs are incomplete or their conclusions are wrong. Use this checklist when implementing or reviewing AI-powered finance features:
+
+1. **Minimize data sent to models.** Send only the transaction details needed for the task, and follow the application's privacy and consent requirements for any external AI service.
+2. **Validate model output.** Treat responses as untrusted input. Validate structured fields against a schema and handle missing, malformed, or unexpected values without breaking the user experience.
+3. **Keep calculations deterministic.** Compute balances, totals, budget utilization, and other financial figures using application logic and persisted data. Do not rely on a language model for arithmetic or as the source of truth.
+4. **Limit model authority.** AI suggestions must not independently create, edit, or delete financial records. Require the normal authenticated and validated application flow for any user-confirmed action.
+5. **Handle uncertainty and outages.** Distinguish estimates from verified facts, avoid unsupported claims, and provide a safe fallback when the model is unavailable or returns unusable output.
+6. **Test adversarial and edge cases.** Cover prompt-injection attempts in user-controlled text, empty or conflicting transaction data, malformed responses, timeouts, and attempts to expose another user's information.
+
+These are review recommendations, not a statement that the application currently implements them. Confirm the safeguards in code and tests before describing an AI feature as production-ready.
