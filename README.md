@@ -15,6 +15,7 @@ FinTrack AI combines a modern React interface, a secure Node.js backend, Postgre
 - [CSV Transaction Import Safety Checklist](#csv-transaction-import-safety-checklist)
 - [CSV Export Safety](#csv-export-safety)
 - [AI Insight Validation Checklist](#ai-insight-validation-checklist)
+- [Transaction Dates and Time Zones](#transaction-dates-and-time-zones)
 
 ## Project Overview
 
@@ -146,7 +147,7 @@ If a feature is planned, partially implemented, or unverified, describe it that 
 CSV imports can introduce malformed, duplicated, or incorrectly interpreted financial records. Use this checklist when implementing or reviewing an import flow:
 
 1. **Validate the file.** Enforce an allowed format and reasonable file-size and row-count limits; do not trust the filename or browser-provided content type alone.
-2. **Validate each row on the server.** Check required columns, date formats, currency, transaction type, amount precision, and category/account ownership. Reject or clearly report invalid rows.
+2. **Validate each row on the server.** Check required columns, date formats, currency, transaction type, amount precision, and category/account ownership. Client-side validation improves usability but is not a security boundary.
 3. **Preview before saving.** Show parsed values and validation errors so users can catch incorrect column mappings or date/decimal interpretation before confirming an import.
 4. **Define duplicate handling.** Establish a documented matching strategy for repeated uploads, such as a stable source transaction identifier where available. Avoid silently assuming that two similar-looking transactions are duplicates.
 5. **Keep writes consistent.** Decide whether an import is all-or-nothing or supports partial success, and report that behavior clearly. Use database transactions where needed to prevent unintended partial updates.
@@ -181,3 +182,15 @@ AI-generated summaries and recommendations can sound confident even when their i
 6. **Test adversarial and edge cases.** Cover prompt-injection attempts in user-controlled text, empty or conflicting transaction data, malformed responses, timeouts, and attempts to expose another user's information.
 
 These are review recommendations, not a statement that the application currently implements them. Confirm the safeguards in code and tests before describing an AI feature as production-ready.
+
+## Transaction Dates and Time Zones
+
+Transaction dates affect monthly reports, recurring entries, and budget boundaries. Define date semantics explicitly so the same transaction is not counted in different periods by different parts of the application.
+
+- **Distinguish date-only values from timestamps.** A transaction entered as a calendar date may not represent a precise instant. Avoid converting date-only values through UTC in ways that shift the displayed day.
+- **Choose a consistent reporting zone.** Decide whether reports follow the user's configured time zone or another documented product rule, and use that rule consistently in API queries and UI summaries.
+- **Use explicit period boundaries.** For timestamp-based queries, prefer a start-inclusive and end-exclusive range to avoid double-counting records at adjacent month boundaries.
+- **Define recurring transaction behavior.** Specify how due dates behave across short months, leap years, and daylight-saving transitions where applicable.
+- **Test boundary cases.** Include transactions near midnight, month-end, year-end, and time-zone changes, plus users viewing the same account from different zones.
+
+These are design and testing recommendations, not claims that the current application implements a particular time-zone policy. Document the chosen behavior and verify it against query logic and tests.
