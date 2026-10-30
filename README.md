@@ -71,40 +71,35 @@ AI-generated insights will be advisory. Financial calculations and transaction r
 
 ### Frontend
 
-- React
+- Next.js 16 with React 19
 - TypeScript
-- Vite
-- React Router
 - TanStack Query
-- Redux Toolkit, where shared client state is required
+- Redux Toolkit and React Redux
 - Tailwind CSS
-- React Hook Form
-- Zod
-- Recharts
+- Lucide React
 
 ### Backend
 
 - Node.js
-- Express.js
+- Express.js 5
 - TypeScript
 - RESTful APIs
-- Zod validation
-- Helmet
-- Secure cookie-based authentication
-- Prisma ORM
+- Zod request validation
+- Helmet security headers
+- Cookie parsing and CORS middleware
+- Prisma ORM with the PostgreSQL adapter
 
 ### Database
 
 - PostgreSQL
-- Neon for managed database hosting
-- Prisma migrations
-- Relational constraints and indexes
-- SQL query analysis and optimization
+- Prisma ORM and migrations
+- PostgreSQL driver (`pg`)
 
-### Testing and Development Tools
+### Development Tools
 
-- Vitest
-- Supertest
+- ESLint 9
+- TypeScript compiler
+- npm scripts for development, linting, and production builds
 
 ## Financial Data Integrity Principles
 
